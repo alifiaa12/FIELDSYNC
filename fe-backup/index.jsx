@@ -364,8 +364,17 @@ input[type=file]::file-selector-button:hover{background:var(--primary)}
   </main>
 </div>
 <script>
-Chart.defaults.color='#94a3b8';
-Chart.defaults.borderColor='rgba(255,255,255,.1)';
+function hasChart(){
+  if (typeof Chart === 'undefined') {
+    console.warn('Chart.js tidak tersedia, grafik dilewati agar aplikasi tetap berjalan.');
+    return false;
+  }
+  return true;
+}
+if (hasChart()) {
+  Chart.defaults.color='#94a3b8';
+  Chart.defaults.borderColor='rgba(255,255,255,.1)';
+}
 let MC=null,XA=null,XK=null;
 let reports=JSON.parse(localStorage.getItem('reports')||'[]');
 let users=JSON.parse(localStorage.getItem('users')||'[]');
@@ -418,7 +427,13 @@ function register(){
 // CHARTS
 function renderMain(){
   const cnt=reports.reduce((a,r)=>{a[r.task]=(a[r.task]||0)+1;return a},{});
-  const ctx=G('chartMain').getContext('2d');if(MC)MC.destroy();
+  const canvas=G('chartMain');
+  if(!canvas) return;
+  if(!hasChart()){
+    canvas.outerHTML='<div class="glass ccard" style="text-align:center;color:var(--muted)">Grafik tidak bisa dimuat saat ini.</div>';
+    return;
+  }
+  const ctx=canvas.getContext('2d');if(MC)MC.destroy();
   const gr=ctx.createLinearGradient(0,0,0,400);gr.addColorStop(0,'rgba(225,0,25,.8)');gr.addColorStop(1,'rgba(255,107,53,.5)');
   MC=new Chart(ctx,{type:'bar',data:{labels:Object.keys(cnt),datasets:[{label:'Jumlah Progress',data:Object.values(cnt),backgroundColor:gr,borderRadius:6,borderWidth:0}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
 }
@@ -435,7 +450,13 @@ function uploadExcel(){
   },700);
 }
 function renderXC(id){
-  const ctx=G(id).getContext('2d');
+  const canvas=G(id);
+  if(!canvas) return;
+  if(!hasChart()){
+    canvas.outerHTML='<div class="glass ccard" style="text-align:center;color:var(--muted)">Grafik Excel tidak bisa dimuat saat ini.</div>';
+    return;
+  }
+  const ctx=canvas.getContext('2d');
   if(id==='chartExcelA'&&XA)XA.destroy();if(id==='chartExcelK'&&XK)XK.destroy();
   const gr=ctx.createLinearGradient(0,0,0,400);gr.addColorStop(0,'rgba(16,185,129,.7)');gr.addColorStop(1,'rgba(16,185,129,.05)');
   const c=new Chart(ctx,{type:'line',data:{labels:['Jan','Feb','Mar','Apr','Mei','Jun'],datasets:[{label:'Target Pencapaian (Data Excel)',data:[65,59,80,81,56,95],borderColor:'#10b981',backgroundColor:gr,borderWidth:2.5,pointBackgroundColor:'#fff',pointBorderColor:'#10b981',pointRadius:4,fill:true,tension:.4}]},options:{responsive:true,plugins:{legend:{display:true}},scales:{y:{beginAtZero:true}}}});
